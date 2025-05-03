@@ -5,6 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "EXPO_ROUTER_APP_ROOT=app expo start",
+    "dev:windows": "powershell -Command \"$env:EXPO_ROUTER_APP_ROOT='app'; expo start\"",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
     "start": "serve dist"

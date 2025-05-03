@@ -1,42 +1,36 @@
-import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+// trainingWeekService.ts
 
-export type Training = {
-  id: string;
-  day: string;
-  type: string;
-  distance?: number;
-  pace?: string;
-  notes?: string;
-};
+import { db } from "../firebase/config";
+import { TrainingWeek } from '@/types';
+import { collection, addDoc, query, where, getDocs, orderBy } from 'firebase/firestore';
 
-export type TrainingWeek = {
-  id: string;
-  studentId: string;
-  weekName: string;
-  trainings: Training[];
-  delivered: boolean;
-  completed: boolean;
-  createdAt: any;
-  updatedAt: any;
-};
-
-export async function fetchTrainingWeekByStudent(studentId: string): Promise<TrainingWeek | null> {
-  const q = query(collection(db, 'trainingWeeks'), where('studentId', '==', studentId));
-  const snapshot = await getDocs(q);
-  if (snapshot.empty) return null;
-  const doc = snapshot.docs[0];
-  return {
-    id: doc.id,
-    ...doc.data(),
-  } as TrainingWeek;
+export async function addTrainingWeek(trainingWeek: TrainingWeek): Promise<void> {
+  const trainingWeeksRef = collection(db, 'trainingWeeks');
+  await addDoc(trainingWeeksRef, trainingWeek);
 }
 
-export const addTrainingWeek = async (trainingWeek: any) => {
-  const ref = collection(db, 'trainingWeeks');
-  await addDoc(ref, {
-    ...trainingWeek,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-};
+export async function fetchTrainingWeekByStudent(studentId: string): Promise<TrainingWeek | null> {
+  const q = query(
+    collection(db, 'trainingWeeks'),
+    where('studentId', '==', studentId),
+    orderBy('weekName', 'desc')
+  );
+
+  const snapshot = await getDocs(q);
+  if (snapshot.empty) return null;
+
+  // Retorna a semana mais recente
+  return snapshot.docs[0].data() as TrainingWeek;
+}
+
+// ✅ Nova função: busca todas as semanas de treino do aluno
+export async function fetchTrainingWeeksByStudent(studentId: string): Promise<TrainingWeek[]> {
+  const q = query(
+    collection(db, 'trainingWeeks'),
+    where('studentId', '==', studentId),
+    //orderBy('createdAt', 'desc')
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => doc.data() as TrainingWeek);
+}

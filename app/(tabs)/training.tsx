@@ -5,43 +5,44 @@ import {
 import { useThemeContext } from '@/context/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Calendar, Clock, Plus, Share2, ClipboardCopy, MessageSquare } from 'lucide-react-native';
+import {
+  Calendar, Clock, Plus, Share2, ClipboardCopy, MessageSquare, CreditCard as Edit,
+} from 'lucide-react-native';
 import { GlobalStyles } from '@/constants/Colors';
 import { TrainingWeek, TrainingType } from '@/types';
 import { formatTrainingWeek, copyToClipboard, shareViaWhatsApp } from '@/utils/sharing';
-import { fetchTrainingWeekByStudent } from '@/services/trainingWeekService';
+import { fetchTrainingWeeksByStudent } from '@/services/trainingWeekService';
 import { fetchStudentsWithTrainingWeeks } from '@/services/studentService';
 import { Student } from '@/types';
 import { NewTrainingModal } from '@/components/modals/NewTrainingModal';
 
-import { CreditCard as Edit } from 'lucide-react-native';
-
 export default function TrainingScreen() {
   const { theme } = useThemeContext();
-  const [activeStudentId, setActiveStudentId] = useState<string>('1');
-  const [selectedWeek, setSelectedWeek] = useState<TrainingWeek | null>(null);
+  const [activeStudentId, setActiveStudentId] = useState<string>('');
   const [students, setStudents] = useState<Student[]>([]);
+  const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
   const [isModalVisible, setModalVisible] = useState(false);
 
+  const selectedWeek = weeks[selectedWeekIndex] || null;
 
-  // Carrega os alunos que têm treinos
   useEffect(() => {
     const loadStudents = async () => {
       const list = await fetchStudentsWithTrainingWeeks();
       setStudents(list);
-      if (list.length > 0) {
-        setActiveStudentId(list[0].id); // ativa o primeiro da lista automaticamente
-      }
+      if (list.length > 0) setActiveStudentId(list[0].id);
     };
     loadStudents();
   }, []);
 
   useEffect(() => {
-    const loadWeek = async () => {
-      const week = await fetchTrainingWeekByStudent(activeStudentId);
-      setSelectedWeek(week);
+    const loadWeeks = async () => {
+      if (!activeStudentId) return;
+      const studentWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
+      setWeeks(studentWeeks);
+      setSelectedWeekIndex(0); // Seleciona a semana mais recente
     };
-    loadWeek();
+    loadWeeks();
   }, [activeStudentId]);
 
   const getTrainingTypeColor = (type: TrainingType) => {
@@ -76,19 +77,15 @@ export default function TrainingScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.screenTitle, { color: theme.text }]}>Planos de Treino</Text>
-          <Button
-            title="Novo Treino"
-            onPress={() => setModalVisible(true)}
-            icon={<Plus size={18} color="#FFFFFF" />}
-            iconPosition="left"
-          />
+        <Button
+          title="Novo Treino"
+          onPress={() => setModalVisible(true)}
+          icon={<Plus size={18} color="#FFFFFF" />}
+          iconPosition="left"
+        />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.studentSelector}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.studentSelector}>
         {students.map((student) => (
           <TouchableOpacity
             key={student.id}
@@ -98,17 +95,41 @@ export default function TrainingScreen() {
             ]}
             onPress={() => setActiveStudentId(student.id)}
           >
-            <Text
-              style={[
-                styles.studentTabText,
-                { color: activeStudentId === student.id ? '#FFFFFF' : theme.textSecondary },
-              ]}
-            >
+            <Text style={[
+              styles.studentTabText,
+              { color: activeStudentId === student.id ? '#FFFFFF' : theme.textSecondary },
+            ]}>
               {student.name}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Seletor de semanas */}
+      {weeks.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ paddingLeft: 16 }}>
+          {weeks.map((week, index) => (
+            <TouchableOpacity
+              key={index}
+              style={{
+                //paddingHorizontal: 12,
+                //paddingVertical: 6,
+                padding: 20,
+                paddingBottom: 35,
+                borderRadius: 12,
+                marginRight: 8,
+                backgroundColor: selectedWeekIndex === index ? theme.primary : theme.card,
+                marginBottom: 120,
+              }}
+              onPress={() => setSelectedWeekIndex(index)}
+            >
+              <Text style={{ color: selectedWeekIndex === index ? '#fff' : theme.text }}>
+                {week.weekName}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
         {!selectedWeek ? (
@@ -125,17 +146,11 @@ export default function TrainingScreen() {
                 </Text>
               </View>
               <View style={styles.shareActions}>
-                <TouchableOpacity
-                  style={[styles.shareButton, { borderColor: theme.border }]}
-                  onPress={handleCopyToClipboard}
-                >
+                <TouchableOpacity style={[styles.shareButton, { borderColor: theme.border }]} onPress={handleCopyToClipboard}>
                   <ClipboardCopy size={18} color={theme.textSecondary} />
                   <Text style={[styles.shareButtonText, { color: theme.text }]}>Copiar</Text>
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.shareButton, { borderColor: theme.border }]}
-                  onPress={handleShareViaWhatsApp}
-                >
+                <TouchableOpacity style={[styles.shareButton, { borderColor: theme.border }]} onPress={handleShareViaWhatsApp}>
                   <MessageSquare size={18} color={theme.textSecondary} />
                   <Text style={[styles.shareButtonText, { color: theme.text }]}>WhatsApp</Text>
                 </TouchableOpacity>
@@ -151,9 +166,7 @@ export default function TrainingScreen() {
                       <Text style={[styles.dayName, { color: theme.textSecondary }]}>{day}</Text>
                     </View>
                     <View style={styles.emptyDay}>
-                      <Text style={[styles.emptyDayText, { color: theme.textSecondary }]}>
-                        Descanso
-                      </Text>
+                      <Text style={[styles.emptyDayText, { color: theme.textSecondary }]}>Descanso</Text>
                     </View>
                   </Card>
                 );
@@ -212,22 +225,21 @@ export default function TrainingScreen() {
       <NewTrainingModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
-        onSaved={() => {
+        onSaved={async () => {
           setModalVisible(false);
           if (activeStudentId) {
-            fetchTrainingWeekByStudent(activeStudentId).then(setSelectedWeek);
+            const updatedWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
+            setWeeks(updatedWeeks);
+            setSelectedWeekIndex(0);
           }
         }}
       />
-
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -245,8 +257,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   studentTab: {
-    //paddingHorizontal: 16,
-    //paddingVertical: 30,
     padding: 30,
     paddingTop: 15,
     borderRadius: 20,
@@ -349,4 +359,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
- 
