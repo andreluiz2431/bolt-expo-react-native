@@ -12,6 +12,7 @@ import { formatTrainingWeek, copyToClipboard, shareViaWhatsApp } from '@/utils/s
 import { fetchTrainingWeekByStudent } from '@/services/trainingWeekService';
 import { fetchStudentsWithTrainingWeeks } from '@/services/studentService';
 import { Student } from '@/types';
+import { NewTrainingModal } from '@/components/modals/NewTrainingModal';
 
 import { CreditCard as Edit } from 'lucide-react-native';
 
@@ -20,6 +21,8 @@ export default function TrainingScreen() {
   const [activeStudentId, setActiveStudentId] = useState<string>('1');
   const [selectedWeek, setSelectedWeek] = useState<TrainingWeek | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
+  const [isModalVisible, setModalVisible] = useState(false);
+
 
   // Carrega os alunos que têm treinos
   useEffect(() => {
@@ -73,12 +76,12 @@ export default function TrainingScreen() {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.screenTitle, { color: theme.text }]}>Planos de Treino</Text>
-        <Button
-          title="Novo Treino"
-          onPress={() => {}}
-          icon={<Plus size={18} color="#FFFFFF" />}
-          iconPosition="left"
-        />
+          <Button
+            title="Novo Treino"
+            onPress={() => setModalVisible(true)}
+            icon={<Plus size={18} color="#FFFFFF" />}
+            iconPosition="left"
+          />
       </View>
 
       <ScrollView
@@ -205,6 +208,18 @@ export default function TrainingScreen() {
           </>
         )}
       </ScrollView>
+
+      <NewTrainingModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onSaved={() => {
+          setModalVisible(false);
+          if (activeStudentId) {
+            fetchTrainingWeekByStudent(activeStudentId).then(setSelectedWeek);
+          }
+        }}
+      />
+
     </SafeAreaView>
   );
 }

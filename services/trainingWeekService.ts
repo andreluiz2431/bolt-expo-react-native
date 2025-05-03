@@ -1,4 +1,4 @@
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 export type Training = {
@@ -31,3 +31,12 @@ export async function fetchTrainingWeekByStudent(studentId: string): Promise<Tra
     ...doc.data(),
   } as TrainingWeek;
 }
+
+export const addTrainingWeek = async (trainingWeek: any) => {
+  const ref = collection(db, 'trainingWeeks');
+  await addDoc(ref, {
+    ...trainingWeek,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+};
