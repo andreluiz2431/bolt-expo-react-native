@@ -7,7 +7,7 @@
     "dev": "EXPO_ROUTER_APP_ROOT=app expo start",
     "build:web": "expo export --platform web",
     "lint": "expo lint",
-    "start": "serve web"
+    "start": "serve dist"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.2.3",
