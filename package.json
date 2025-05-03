@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "powershell -Command \"$env:EXPO_ROUTER_APP_ROOT='app'; expo start\"",
+    "dev": "EXPO_ROUTER_APP_ROOT=app expo start",
     "build:web": "expo export --platform web",
     "lint": "expo lint"
   },
