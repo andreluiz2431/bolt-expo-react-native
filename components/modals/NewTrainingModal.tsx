@@ -9,8 +9,8 @@ import { X, Plus } from 'lucide-react-native';
 import { TrainingDay, TrainingType, Student } from '@/types';
 import { addTrainingWeek } from '@/services/trainingWeekService';
 import { fetchStudents } from '@/services/studentService';
-import { Picker } from '@react-native-picker/picker';
-import Checkbox from 'expo-checkbox';
+import { SelectDropdown } from '@/components/ui/SelectDropdown';
+import CustomCheckbox from '@/components/ui/CustomCheckbox';
 
 interface NewTrainingModalProps {
   visible: boolean;
@@ -87,17 +87,12 @@ export function NewTrainingModal({ visible, onClose, onSaved }: NewTrainingModal
         <ScrollView style={styles.content}>
           <Card style={styles.section}>
             <Text style={[styles.label, { color: theme.text }]}>Aluno</Text>
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={selectedStudentId}
-                onValueChange={(itemValue) => setSelectedStudentId(itemValue)}
-                style={{ color: theme.text }}
-              >
-                {students.map((student) => (
-                  <Picker.Item key={student.id} label={student.name} value={student.id} />
-                ))}
-              </Picker>
-            </View>
+            <SelectDropdown
+              data={students.map(s => ({ label: s.name, value: s.id }))}
+              selected={selectedStudentId}
+              onSelect={setSelectedStudentId}
+              placeholder="Selecione um aluno"
+            />
 
             <Text style={[styles.label, { color: theme.text }]}>Semana (ex: 06 a 12 de maio)</Text>
             <TextInput
@@ -113,30 +108,21 @@ export function NewTrainingModal({ visible, onClose, onSaved }: NewTrainingModal
             <Card key={day} style={[styles.section, { backgroundColor: theme.card }]}>
               <View style={styles.dayHeader}>
                 <Text style={[styles.dayTitle, { color: theme.text }]}>{day}</Text>
-                <View style={styles.checkboxRow}>
-                  <Checkbox
-                    value={trainings[day].rest}
-                    onValueChange={(value) => setTrainings(prev => ({ ...prev, [day]: { ...prev[day], rest: value } }))}
-                    color={theme.primary}
-                  />
-                  <Text style={{ color: theme.text, marginLeft: 8 }}>Descanso</Text>
-                </View>
+                <CustomCheckbox
+                  label="Descanso"
+                  checked={trainings[day].rest}
+                  onChange={(value) => setTrainings(prev => ({ ...prev, [day]: { ...prev[day], rest: value } }))}
+                />
               </View>
 
               {!trainings[day].rest && (
                 <>
                   <Text style={[styles.label, { color: theme.text }]}>Tipo</Text>
-                  <View style={styles.pickerWrapper}>
-                    <Picker
-                      selectedValue={trainings[day].type}
-                      onValueChange={(value) => setTrainings(prev => ({ ...prev, [day]: { ...prev[day], type: value } }))}
-                      style={{ color: theme.text }}
-                    >
-                      {trainingTypes.map(type => (
-                        <Picker.Item key={type} label={type} value={type} />
-                      ))}
-                    </Picker>
-                  </View>
+                  <SelectDropdown
+                    data={trainingTypes.map(type => ({ label: type, value: type }))}
+                    selected={trainings[day].type}
+                    onSelect={(value) => setTrainings(prev => ({ ...prev, [day]: { ...prev[day], type: value } }))}
+                  />
 
                   <Text style={[styles.label, { color: theme.text }]}>Distância (km)</Text>
                   <TextInput
@@ -220,12 +206,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-Regular',
     textAlignVertical: 'top',
   },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderColor: '#ccc',
-  },
   dayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -235,10 +215,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Inter-SemiBold',
     marginBottom: 12,
-  },
-  checkboxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   footer: {
     flexDirection: 'row',
