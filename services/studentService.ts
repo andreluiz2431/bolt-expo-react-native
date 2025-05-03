@@ -1,5 +1,6 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, addDoc, serverTimestamp  } from "firebase/firestore";
 import { db } from "../firebase/config";
+import { Student } from '@/types';
 
 export async function fetchStudents() {
   const snapshot = await getDocs(collection(db, "students"));
@@ -33,3 +34,18 @@ export async function fetchStudentsWithTrainingWeeks() {
 
   return Array.from(studentMap.values());
 }
+
+export const addStudent = async (student: Partial<Student>) => {
+  const studentsRef = collection(db, 'students');
+  const payload = {
+    nome: student.name,
+    contato: student.contact,
+    objetivo: student.goals,
+    nivel: student.level,
+    situacao: student.subscriptionStatus || 'ativo',
+    mensalidade: student.monthlyFee || 0,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  await addDoc(studentsRef, payload);
+};

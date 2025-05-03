@@ -10,6 +10,7 @@ import { Plus, Search, UserRound, CreditCard as Edit, Trash2 } from 'lucide-reac
 import { GlobalStyles } from '@/constants/Colors';
 import { StudentLevel } from '@/types';
 import { fetchStudents } from '@/services/studentService';
+import { NewStudentModal } from '@/components/modals/NewStudentModal';
 
 type Student = {
   id: string;
@@ -26,13 +27,15 @@ export default function StudentsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [students, setStudents] = useState<Student[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<StudentLevel | null>(null);
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const loadStudents = async () => {
+    const list = await fetchStudents();
+    setStudents(list);
+  };
 
   useEffect(() => {
-    const load = async () => {
-      const list = await fetchStudents();
-      setStudents(list);
-    };
-    load();
+    loadStudents();
   }, []);
 
   const filteredStudents = students.filter(student => {
@@ -88,7 +91,7 @@ export default function StudentsScreen() {
         <Text style={[styles.screenTitle, { color: theme.text }]}>Seus Alunos</Text>
         <Button
           title="Novo Aluno"
-          onPress={() => {}}
+          onPress={() => setModalVisible(true)}
           icon={<Plus size={18} color="#FFFFFF" />}
           iconPosition="left"
         />
@@ -133,6 +136,12 @@ export default function StudentsScreen() {
         renderItem={renderStudentItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
+      />
+
+      <NewStudentModal
+        visible={isModalVisible}
+        onClose={() => setModalVisible(false)}
+        onStudentAdded={loadStudents}
       />
     </SafeAreaView>
   );
