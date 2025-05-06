@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { useThemeContext } from '@/context/ThemeContext';
 import { Card } from '@/components/ui/Card';
@@ -6,8 +6,24 @@ import { Button } from '@/components/ui/Button';
 import { Sun, Moon, LogOut, User, Bell, CircleHelp as HelpCircle, Shield, ChevronRight } from 'lucide-react-native';
 import { GlobalStyles } from '@/constants/Colors';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+
 export default function SettingsScreen() {
   const { theme, isDark, toggleTheme } = useThemeContext();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const verificarSessao = async () => {
+      const usuarioSalvo = await AsyncStorage.getItem('user');
+      if (!usuarioSalvo) {
+        router.replace('/LoginScreen'); // redireciona se não estiver logado
+      }
+    };
+
+    verificarSessao();
+  }, []);
 
   // Mock user data
   const user = {
@@ -114,7 +130,10 @@ export default function SettingsScreen() {
           <Button
             title="Sair da Conta"
             variant="danger"
-            onPress={() => {}}
+            onPress={async () => {
+              await AsyncStorage.clear();
+              router.replace('/LoginScreen');
+            }}
             icon={<LogOut size={18} color="#FFFFFF" />}
             iconPosition="left"
             fullWidth
