@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, ScrollView, SafeAreaView, Image } from 'react-native';
 import { useThemeContext } from '@/context/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,30 +8,26 @@ import { GlobalStyles } from '@/constants/Colors';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
 
 export default function SettingsScreen() {
   const { theme, isDark, toggleTheme } = useThemeContext();
-
   const router = useRouter();
 
+  useAuthRedirect(); // redireciona se não logado
+
+  const [user, setUser] = useState<{ nome: string; email?: string; profile?: string } | null>(null);
+
   useEffect(() => {
-    const verificarSessao = async () => {
-      const usuarioSalvo = await AsyncStorage.getItem('user');
-      if (!usuarioSalvo) {
-        router.replace('/LoginScreen'); // redireciona se não estiver logado
+    const carregarUsuario = async () => {
+      const data = await AsyncStorage.getItem('user');
+      if (data) {
+        setUser(JSON.parse(data));
       }
     };
 
-    verificarSessao();
+    carregarUsuario();
   }, []);
-
-  // Mock user data
-  const user = {
-    name: 'Pedro Treinador',
-    email: 'pedro@runnercoach.com',
-    role: 'Treinador',
-    avatarUrl: null, // We would use an actual URL here
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -40,15 +36,30 @@ export default function SettingsScreen() {
         <Text style={[styles.sectionTitle, { color: theme.text }]}>Perfil</Text>
         <Card style={styles.profileCard}>
           <View style={styles.profileHeader}>
-            <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-              <Text style={styles.avatarText}>
-                {user.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            {user?.profile ? (
+              <Image
+                source={{ uri: user.profile }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
+                <Text style={styles.avatarText}>
+                  {user?.nome?.charAt(0).toUpperCase() ?? 'T'}
+                </Text>
+              </View>
+            )}
             <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: theme.text }]}>{user.name}</Text>
-              <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>{user.email}</Text>
-              <Text style={[styles.profileRole, { color: theme.primary }]}>{user.role}</Text>
+              <Text style={[styles.profileName, { color: theme.text }]}>
+                {user?.nome ?? 'Treinador'}
+              </Text>
+              {user?.email && (
+                <Text style={[styles.profileEmail, { color: theme.textSecondary }]}>
+                  {user.email}
+                </Text>
+              )}
+              <Text style={[styles.profileRole, { color: theme.primary }]}>
+                Treinador
+              </Text>
             </View>
           </View>
           <Button
@@ -66,8 +77,8 @@ export default function SettingsScreen() {
         <Card>
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              {isDark ? 
-                <Moon size={20} color={theme.text} /> : 
+              {isDark ?
+                <Moon size={20} color={theme.text} /> :
                 <Sun size={20} color={theme.text} />
               }
               <Text style={[styles.settingText, { color: theme.text }]}>
@@ -184,6 +195,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontFamily: 'Inter-Bold',
     color: '#FFFFFF',
+  },
+  avatarImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   profileInfo: {
     marginLeft: 16,
