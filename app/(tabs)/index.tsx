@@ -4,8 +4,6 @@ import { useThemeContext } from '@/context/ThemeContext';
 import { Card } from '@/components/ui/Card';
 import { ParkingMeter as RunningMen } from 'lucide-react-native';
 import { GlobalStyles } from '@/constants/Colors';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from '@/firebase/config';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import * as Linking from "expo-linking";
@@ -14,21 +12,13 @@ import { STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET } from "@env";
 import { setDoc, doc } from 'firebase/firestore';
 import { db } from '@/firebase/config'; // ou o caminho real do seu config Firebase
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import { useLoadUser } from '@/hooks/useLoadUser';
 
 export default function DashboardScreen() {
-  const [nome, setNome] = useState<string | null>(null);
 
-  useEffect(() => {
-    const carregarUsuario = async () => {
-      const dados = await AsyncStorage.getItem('user');
-      if (dados) {
-        const user = JSON.parse(dados);
-        setNome(user.nome);
-      }
-    };
-  
-    carregarUsuario();
-  }, []);
+  useAuthRedirect(); // redireciona se não logado
+  const user = useLoadUser(); // ✅ Carrega o usuário com o hook
 
   const { theme } = useThemeContext();
 
@@ -115,7 +105,7 @@ export default function DashboardScreen() {
         {/* Welcome Section */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: theme.text }]}>{nome ? `Olá, ${nome}` : "Olá, Treinador"}</Text>
+            <Text style={[styles.greeting, { color: theme.text }]}>{user?.nome ? `Olá, Assessor ${user?.nome}` : "Olá, Treinador"}</Text>
             <Text style={[styles.date, { color: theme.textSecondary }]}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>

@@ -4,8 +4,6 @@ import { View, Text, StyleSheet } from "react-native";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "expo-router";
 import { signInWithStrava } from "@/services/stravaService";
-import { db } from "@/firebase/config";
-import { doc, setDoc } from "firebase/firestore";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -13,13 +11,6 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     try {
       const user = await signInWithStrava();
-
-      await setDoc(doc(db, "users", String(user.id)), {
-        id: user.id,
-        nome: user.firstname + " " + user.lastname,
-        email: user.email,
-        createdAt: new Date(),
-      });
 
       router.replace("/"); // ou rota principal do app
     } catch (error) {

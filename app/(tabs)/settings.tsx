@@ -9,6 +9,7 @@ import { GlobalStyles } from '@/constants/Colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
+import { useLoadUser } from '@/hooks/useLoadUser';
 
 export default function SettingsScreen() {
   const { theme, isDark, toggleTheme } = useThemeContext();
@@ -16,18 +17,7 @@ export default function SettingsScreen() {
 
   useAuthRedirect(); // redireciona se não logado
 
-  const [user, setUser] = useState<{ nome: string; email?: string; profile?: string } | null>(null);
-
-  useEffect(() => {
-    const carregarUsuario = async () => {
-      const data = await AsyncStorage.getItem('user');
-      if (data) {
-        setUser(JSON.parse(data));
-      }
-    };
-
-    carregarUsuario();
-  }, []);
+  const user = useLoadUser(); // ✅ Carrega o usuário com o hook
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
