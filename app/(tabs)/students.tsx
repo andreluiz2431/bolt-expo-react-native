@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, SafeAreaView,
@@ -9,34 +9,16 @@ import { Button } from '@/components/ui/Button';
 import { Plus, Search, UserRound, CreditCard as Edit, Trash2 } from 'lucide-react-native';
 import { GlobalStyles } from '@/constants/Colors';
 import { StudentLevel } from '@/types';
-import { fetchStudents } from '@/services/studentService';
+import { studentLevels } from '@/constants/studentLevels';
 import { NewStudentModal } from '@/components/modals/NewStudentModal';
-
-type Student = {
-  id: string;
-  name: string;
-  contact: string;
-  goals: string;
-  level: StudentLevel;
-  createdAt: any;
-  updatedAt: any;
-};
+import { useStudents } from '@/hooks/useStudents';
 
 export default function StudentsScreen() {
   const { theme } = useThemeContext();
   const [searchQuery, setSearchQuery] = useState('');
-  const [students, setStudents] = useState<Student[]>([]);
   const [selectedLevel, setSelectedLevel] = useState<StudentLevel | null>(null);
   const [isModalVisible, setModalVisible] = useState(false);
-
-  const loadStudents = async () => {
-    const list = await fetchStudents();
-    setStudents(list);
-  };
-
-  useEffect(() => {
-    loadStudents();
-  }, []);
+  const { students, reload } = useStudents();
 
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -53,7 +35,7 @@ export default function StudentsScreen() {
     }
   };
 
-  const renderStudentItem = ({ item }: { item: Student }) => (
+  const renderStudentItem = ({ item }) => (
     <Card style={styles.studentCard}>
       <View style={styles.studentHeader}>
         <View style={styles.studentInfo}>
@@ -109,7 +91,7 @@ export default function StudentsScreen() {
       </View>
 
       <View style={styles.filterTabs}>
-        {['Todos', 'Iniciante', 'Intermediário', 'Avançado'].map((nivel) => {
+        {studentLevels.map((nivel) => {
           const isSelected = nivel === (selectedLevel || 'Todos');
           const nivelKey = nivel === 'Todos' ? null : nivel as StudentLevel;
           const bg = nivel === 'Iniciante' ? theme.success
@@ -141,7 +123,7 @@ export default function StudentsScreen() {
       <NewStudentModal
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
-        onStudentAdded={loadStudents}
+        onStudentAdded={reload}
       />
     </SafeAreaView>
   );

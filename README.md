@@ -51,7 +51,7 @@ npm run dev:windows
 
     [] login
 
-[] Ajustar menu inferior de telas para que não apareça o login
+✅ Ajustar menu inferior de telas para que não apareça o login
 
 [] Melhorar legibilidade do código
 
