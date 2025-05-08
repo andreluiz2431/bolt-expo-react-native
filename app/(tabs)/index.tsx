@@ -1,111 +1,35 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
 import { useThemeContext } from '@/context/ThemeContext';
+import { useUserContext } from '@/context/UserContext';
 import { Card } from '@/components/ui/Card';
 import { ParkingMeter as RunningMen } from 'lucide-react-native';
 import { GlobalStyles } from '@/constants/Colors';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import * as Linking from "expo-linking";
-import axios from "axios";
-import { STRAVA_CLIENT_ID, STRAVA_CLIENT_SECRET } from "@env";
-import { setDoc, doc } from 'firebase/firestore';
-import { db } from '@/firebase/config'; // ou o caminho real do seu config Firebase
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuthRedirect } from '@/hooks/useAuthRedirect';
-import { useLoadUser } from '@/hooks/useLoadUser';
+import { useStravaAuth } from '@/hooks/useStravaAuth';
+import { stats, recentUpdates, pendingActions } from '@/constants/dashboardData';
 
 export default function DashboardScreen() {
+  useAuthRedirect();
+  useStravaAuth();
 
-  useAuthRedirect(); // redireciona se não logado
-  const user = useLoadUser(); // ✅ Carrega o usuário com o hook
-
+  const { user } = useUserContext();
   const { theme } = useThemeContext();
-
   const router = useRouter();
-
-  useEffect(() => {
-    const checkLoginCallback = async () => {
-      const url = await Linking.getInitialURL();
-
-      if (url && url.includes("code=")) {
-        const code = new URL(url).searchParams.get("code");
-
-        if (code) {
-          try {
-            const tokenRes = await axios.post("https://www.strava.com/oauth/token", {
-              client_id: STRAVA_CLIENT_ID,
-              client_secret: STRAVA_CLIENT_SECRET,
-              code,
-              grant_type: "authorization_code",
-            });
-
-            const access_token = tokenRes.data.access_token;
-
-            const athleteRes = await axios.get("https://www.strava.com/api/v3/athlete", {
-              headers: { Authorization: `Bearer ${access_token}` },
-            });
-
-            const user = athleteRes.data;
-            console.log("Usuário autenticado:", user.firstname + " " + user.lastname);
-
-            // Aqui você pode salvar no estado ou Firebase
-            await setDoc(doc(db, "users", user.id.toString()), {
-              id: user.id,
-              nome: user.firstname + " " + user.lastname,
-              email: user.email || "não informado",
-              createdAt: new Date(),
-            });  
-            
-            await AsyncStorage.setItem(
-              'user',
-              JSON.stringify({
-                id: user.id,
-                nome: user.firstname + " " + user.lastname,
-                email: user.email || null,
-              })
-            );            
-            
-          } catch (err) {
-            console.error("Erro ao autenticar com Strava", err);
-          }
-        }
-      }
-    };
-
-    checkLoginCallback();
-  }, []);
-
-
-  // Mock data
-  const stats = [
-    { title: 'Alunos Ativos', value: '12' },
-    { title: 'Treinos Esta Semana', value: '24' },
-    { title: 'Competições Próximas', value: '3' },
-  ];
-
-  const recentUpdates = [
-    { id: '1', student: 'Maria Silva', action: 'completou', training: 'treino de 10km', time: '1h atrás' },
-    { id: '2', student: 'João Oliveira', action: 'agendou', training: 'uma competição', time: '3h atrás' },
-    { id: '3', student: 'Ana Lúcia', action: 'completou', training: 'treino de tiros', time: '5h atrás' },
-  ];
-
-  const pendingActions = [
-    { id: '1', action: 'Enviar plano semanal para 5 alunos' },
-    { id: '2', action: 'Revisar progresso de João Oliveira' },
-    { id: '3', action: 'Atualizar treino de Ana Lúcia' },
-  ];
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Section */}
+        {/* Seção de Boas-vindas */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: theme.text }]}>{user?.nome ? `Olá, Assessor ${user?.nome}` : "Olá, Treinador"}</Text>
+            <Text style={[styles.greeting, { color: theme.text }]}>
+              {user?.nome ? `Olá, Assessor ${user.nome}` : "Olá, Treinador"}
+            </Text>
             <Text style={[styles.date, { color: theme.textSecondary }]}>
               {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
@@ -113,7 +37,7 @@ export default function DashboardScreen() {
           <RunningMen size={48} color={theme.primary} />
         </View>
 
-        {/* Stats Cards */}
+        {/* Cards com estatísticas */}
         <View style={styles.statsContainer}>
           {stats.map((stat, index) => (
             <Card key={index} style={styles.statCard}>
@@ -123,7 +47,7 @@ export default function DashboardScreen() {
           ))}
         </View>
 
-        {/* Recent Updates */}
+        {/* Atualizações Recentes */}
         <View style={styles.section}>
           <Text style={[GlobalStyles.subtitle, { color: theme.text }]}>Atualizações Recentes</Text>
           <Card>
@@ -139,7 +63,7 @@ export default function DashboardScreen() {
           </Card>
         </View>
 
-        {/* Pending Actions */}
+        {/* Ações Pendentes */}
         <View style={styles.section}>
           <Text style={[GlobalStyles.subtitle, { color: theme.text }]}>Ações Pendentes</Text>
           <Card>
