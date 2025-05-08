@@ -45,7 +45,7 @@ npm run dev:windows
 
     ✅ Chaves Strava
 
-    [] Chaves Firebase
+    ✅ Chaves Firebase
 
 [] Ajustar redirecionamentos 
 
