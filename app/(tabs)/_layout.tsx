@@ -14,6 +14,7 @@ export default function TabLayout() {
         tabBarStyle: {
           backgroundColor: theme.background,
           borderTopColor: theme.border,
+          height: 60,
         },
         tabBarLabelStyle: {
           fontFamily: 'Inter-Medium',
@@ -31,7 +32,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
+          title: 'Painel',
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
           headerTitle: 'Runner Coach',
           headerTitleStyle: {

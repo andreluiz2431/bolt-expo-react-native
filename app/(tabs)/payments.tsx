@@ -295,12 +295,14 @@ const styles = StyleSheet.create({
   summaryScroll: {
     paddingHorizontal: 16,
     marginVertical: 8,
+    height: 0,
   },
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 12,
     minWidth: 200,
+    height: 120,
   },
   summaryIconContainer: {
     marginRight: 12,
