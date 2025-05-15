@@ -1,3 +1,6 @@
+# keys for populate DB
+serviceAccountKey.json
+
 # dependencies
 node_modules/
 

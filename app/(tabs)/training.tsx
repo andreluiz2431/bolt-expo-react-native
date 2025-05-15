@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { useThemeContext } from '@/context/ThemeContext';
 import { Card } from '@/components/ui/Card';
@@ -11,15 +11,18 @@ import {
 import { GlobalStyles } from '@/constants/Colors';
 import { TrainingWeek, TrainingType } from '@/types';
 import { formatTrainingWeek, copyToClipboard, shareViaWhatsApp } from '@/utils/sharing';
-import { fetchTrainingWeeksByStudent } from '@/services/trainingWeekService';
+import { fetchTrainingWeeksByStudent, deleteTrainingWeek } from '@/services/trainingWeekService';
 import { fetchStudentsWithTrainingWeeks } from '@/services/studentService';
 import { Student } from '@/types';
 import { NewTrainingModal } from '@/components/modals/NewTrainingModal';
+import { Alert } from 'react-native';
+import { Trash2 } from 'lucide-react-native';
 
 export default function TrainingScreen() {
   const { theme } = useThemeContext();
   const [activeStudentId, setActiveStudentId] = useState<string>('');
   const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
   const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
   const [isModalVisible, setModalVisible] = useState(false);
@@ -28,9 +31,11 @@ export default function TrainingScreen() {
 
   useEffect(() => {
     const loadStudents = async () => {
+      setLoading(true);
       const list = await fetchStudentsWithTrainingWeeks();
       setStudents(list);
       if (list.length > 0) setActiveStudentId(list[0].id);
+      setLoading(false);
     };
     loadStudents();
   }, []);
@@ -72,6 +77,16 @@ export default function TrainingScreen() {
       }
     }
   };
+
+  
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" />
+        <Text>Carregando alunos e treinos...</Text>
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -123,9 +138,36 @@ export default function TrainingScreen() {
               }}
               onPress={() => setSelectedWeekIndex(index)}
             >
-              <Text style={{ color: selectedWeekIndex === index ? '#fff' : theme.text }}>
-                {week.weekName}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={{ color: selectedWeekIndex === index ? '#fff' : theme.text }}>
+                  {week.weekName}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    Alert.alert(
+                      "Excluir Semana",
+                      "Tem certeza que deseja excluir esta semana de treino?",
+                      [
+                        { text: "Cancelar", style: "cancel" },
+                        {
+                          text: "Excluir",
+                          style: "destructive",
+                          onPress: async () => {
+                            await deleteTrainingWeek(week.id);
+                            const updatedWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
+                            setWeeks(updatedWeeks);
+                            setSelectedWeekIndex(0);
+                          },
+                        },
+                      ]
+                    );
+                  }}
+                  style={{ marginLeft: 8 }}
+                >
+                  <Trash2 size={16} color={selectedWeekIndex === index ? '#fff' : theme.textSecondary} />
+                </TouchableOpacity>
+              </View>
+
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -158,8 +200,17 @@ export default function TrainingScreen() {
             </View>
 
             {['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((day) => {
-              const dayTrainings = selectedWeek.trainings.filter(t => t.day === day);
+              const dayTrainings = (selectedWeek.trainings || []).filter(t => t.day === day);
               if (dayTrainings.length === 0) {
+                if (loading) {
+                  return (
+                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                      <ActivityIndicator size="large" />
+                      <Text>Carregando alunos e treinos...</Text>
+                    </View>
+                  );
+                }
+
                 return (
                   <Card key={day} style={styles.emptyDayCard}>
                     <View style={styles.dayHeader}>
@@ -169,6 +220,15 @@ export default function TrainingScreen() {
                       <Text style={[styles.emptyDayText, { color: theme.textSecondary }]}>Descanso</Text>
                     </View>
                   </Card>
+                );
+              }
+              
+              if (loading) {
+                return (
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" />
+                    <Text>Carregando alunos e treinos...</Text>
+                  </View>
                 );
               }
 

@@ -53,6 +53,12 @@ npm run dev:windows
 
 ✅ Ajustar menu inferior de telas para que não apareça o login
 
+[] Ajustar itens de tela para melhor acessibilidade 
+
+    [] Tamanho da navbar inferiror
+
+    [] Sumário na tela de pagamento
+
 [] Melhorar legibilidade do código
 
 [] Desenvolver o editar dados
