@@ -11,10 +11,11 @@ import {
 import { GlobalStyles } from '@/constants/Colors';
 import { TrainingWeek, TrainingType } from '@/types';
 import { formatTrainingWeek, copyToClipboard, shareViaWhatsApp } from '@/utils/sharing';
-import { fetchTrainingWeeksByStudent, deleteTrainingWeek } from '@/services/trainingWeekService';
+import { fetchTrainingWeeksByStudent, deleteTrainingWeek, updateTrainingInWeek } from '@/services/trainingWeekService';
 import { fetchStudentsWithTrainingWeeks } from '@/services/studentService';
 import { Student } from '@/types';
 import { NewTrainingModal } from '@/components/modals/NewTrainingModal';
+import { EditTrainingModal } from '@/components/modals/EditTrainingModal';
 import { Alert } from 'react-native';
 import { Trash2 } from 'lucide-react-native';
 
@@ -26,6 +27,9 @@ export default function TrainingScreen() {
   const [weeks, setWeeks] = useState<TrainingWeek[]>([]);
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(0);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedTraining, setSelectedTraining] = useState(null);
+
 
   const selectedWeek = weeks[selectedWeekIndex] || null;
 
@@ -68,6 +72,7 @@ export default function TrainingScreen() {
   };
 
   const handleShareViaWhatsApp = async () => {
+    console.log('🚀 ~ file: TrainingScreen.tsx:75 ~ handleShareViaWhatsApp ~ selectedWeek:', selectedWeek)
     const student = students.find(s => s.id === activeStudentId);
     if (student && selectedWeek) {
       const formattedText = formatTrainingWeek(selectedWeek);
@@ -248,7 +253,11 @@ export default function TrainingScreen() {
                             {training.type === 'Normal' ? 'Treino' : training.type}
                           </Text>
                         </View>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => {
+                          console.log('🚀 ~ file: TrainingScreen.tsx:257 ~ TrainingScreen ~ onPress ~ training:', training)
+                          setSelectedTraining(training);
+                          setEditModalVisible(true);
+                        }}>
                           <Edit size={16} color={theme.textSecondary} />
                         </TouchableOpacity>
                       </View>
@@ -294,6 +303,19 @@ export default function TrainingScreen() {
           }
         }}
       />
+
+      <EditTrainingModal
+        visible={editModalVisible}
+        training={selectedTraining}
+        onClose={() => setEditModalVisible(false)}
+        onSave={async (updated) => {
+          await updateTrainingInWeek(selectedWeek.id, updated);
+          const updatedWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
+          setWeeks(updatedWeeks);
+          setEditModalVisible(false);
+        }}
+      />
+
     </SafeAreaView>
   );
 }

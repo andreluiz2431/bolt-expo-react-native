@@ -2,7 +2,7 @@
 
 import { db } from "../firebase/config";
 import { TrainingWeek } from '@/types';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export async function addTrainingWeek(trainingWeek: TrainingWeek): Promise<void> {
   const trainingWeeksRef = collection(db, 'trainingWeeks');
@@ -44,4 +44,16 @@ export async function fetchTrainingWeeksByStudent(studentId: string): Promise<Tr
 export async function deleteTrainingWeek(weekId: string) {
   const weekRef = doc(db, 'trainingWeeks', weekId);
   await deleteDoc(weekRef);
+}
+
+export async function updateTrainingInWeek(weekId: string, updatedTraining) {
+  const ref = doc(db, 'trainingWeeks', weekId);
+  const snapshot = await getDoc(ref);
+  const weekData = snapshot.data();
+
+  const updatedTrainings = (weekData.trainings || []).map(t =>
+    t.id === updatedTraining.id ? updatedTraining : t
+  );
+
+  await updateDoc(ref, { trainings: updatedTrainings });
 }
