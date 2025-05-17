@@ -148,24 +148,12 @@ export default function TrainingScreen() {
                   {week.weekName}
                 </Text>
                 <TouchableOpacity
-                  onPress={() => {
-                    Alert.alert(
-                      "Excluir Semana",
-                      "Tem certeza que deseja excluir esta semana de treino?",
-                      [
-                        { text: "Cancelar", style: "cancel" },
-                        {
-                          text: "Excluir",
-                          style: "destructive",
-                          onPress: async () => {
-                            await deleteTrainingWeek(week.id);
-                            const updatedWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
-                            setWeeks(updatedWeeks);
-                            setSelectedWeekIndex(0);
-                          },
-                        },
-                      ]
-                    );
+                  onPress={async () => {
+                    console.log('🚀 ~ file: TrainingScreen.tsx:152 ~ onPress ~ week:', week)
+                      await deleteTrainingWeek(week.id);
+                      const updatedWeeks = await fetchTrainingWeeksByStudent(activeStudentId);
+                      setWeeks(updatedWeeks);
+                      setSelectedWeekIndex(0);
                   }}
                   style={{ marginLeft: 8 }}
                 >
